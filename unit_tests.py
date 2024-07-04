@@ -3,6 +3,7 @@ import pytest
 import requests
 
 base_URL = "http://127.0.0.1:8000/weather"
+API_KEY = "29c984d578c0119be26f234eca6a6bd2"
 # data = {'coord': {'lon': -5.9333, 'lat': 54.5833},
 #         'weather': [{'id': 803, 'main': 'Clouds', 'description': 'broken clouds', 'icon': '04d'}], 'base': 'stations',
 #         'main': {'temp': 12.93, 'feels_like': 12.32, 'temp_min': 12.9, 'temp_max': 14.1, 'pressure': 1004,
@@ -17,12 +18,18 @@ base_URL = "http://127.0.0.1:8000/weather"
 
 
 
-def test_fetch_weather(city):
+def test_fetch_weather():
     """
     Test for status codes, response times and data formats
     """
+    city = "Belfast"
     response = requests.get(base_URL, params={'city': city})
     assert response.status_code == 200, f"Status code is {response.status_code}"
 
-    data = response.json()
-    assert "min_temp" in data
+    data = response.json()      #Comment is what it says if the assert fails
+    assert "min_temp" in data, "min temp is missing in the response"
+    assert "max_temp" in data, "max temp is missing in the response"
+    assert "avg_temp" in data, "avg temp is missing in the response"
+    assert "avg_humidity" in data, "humidity is missing in the response"
+
+
