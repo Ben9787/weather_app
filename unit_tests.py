@@ -12,7 +12,7 @@ base_URL = "http://127.0.0.1:8000/weather"
 #         'id': 2655984, 'name': 'Belfast', 'cod': 200}
 
 
-def test_process_data():
+#def test_process_data():
 
 
 
@@ -23,4 +23,6 @@ def test_fetch_weather(city):
     """
     response = requests.get(base_URL, params={'city': city})
     assert response.status_code == 200, f"Status code is {response.status_code}"
+
     data = response.json()
+    assert "min_temp" in data
