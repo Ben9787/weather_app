@@ -34,7 +34,7 @@ def fetch_weather(city: str, api_key: str, units: str):
     if response.status_code == 200:
         return response.json()
     else:
-        return {response.status_code: response.reason}
+        return None
 
 
 def process_data(city, data):
@@ -58,9 +58,12 @@ def process_data(city, data):
 @app.get("/weather") # response_model=weatherResponse)
 async def get_weather(city: str):
     data = fetch_weather(city, API_KEY, "metric")
-    if not data:
+    if data is None:
         raise HTTPException(status_code=404, detail="City not found")
 
     return process_data(city, data)
 
 print(fetch_weather("Belfast" , API_KEY, "metric"))
+
+
+    #uvicorn main:app --reload in the terminal
