@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import requests
+import sqlite3
 from typing import Optional
 
 app = FastAPI()
@@ -10,7 +11,6 @@ BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 
 class weatherResponse(BaseModel):
-
     city: str
     min_temp: float
     max_temp: float
@@ -22,6 +22,7 @@ class weatherResponse(BaseModel):
 def fetch_weather(city: str, api_key: str, units: str):
     """
     City = City, api_key = API_KEY, units = standard/metric/imperial
+    :returns: json file of all weather data if successful
     """
     # use a  dictionary so that it can append it onto the end of the URL
     params = {'q': city,
@@ -38,6 +39,17 @@ def fetch_weather(city: str, api_key: str, units: str):
 
 
 def process_data(city, data):
+    """
+
+    :param city:
+    :param data:
+    :return:    weatherResponse
+    :return:    class city=city,
+    :return:    max_temp=main_data['temp_max'],
+    :return:    min_temp=main_data['temp_min'],
+    :return:    avg_temp=main_data['temp'],
+    :return:    avg_humidity=main_data['humidity']
+    """
     main_data = data.get("main")
 
     print("City: ", city,
@@ -55,15 +67,49 @@ def process_data(city, data):
     )
 
 
-@app.get("/weather") # response_model=weatherResponse)
-async def get_weather(city: str):
+@app.get("/weather")  # response_model=weatherResponse)
+def get_weather(city: str):
     data = fetch_weather(city, API_KEY, "metric")
     if data is None:
         raise HTTPException(status_code=404, detail="City not found")
 
     return process_data(city, data)
 
-print(fetch_weather("Belfast" , API_KEY, "metric"))
+
+# print(fetch_weather("Belfast" , API_KEY, "metric"))
 
 
-    #uvicorn main:app --reload in the terminal
+con = sqlite3.connect("weather_app.db")
+
+
+def data_format(city):
+    data = get_weather(city)
+    data_city = data.city
+    data_avg_temp = data.avg_temp
+    data_max_temp = data.max_temp
+    data_min_temp = data.min_temp
+    data_humidity = data.avg_humidity
+    data_submit = [data_city, data_avg_temp, data_max_temp, data_min_temp, data_humidity]
+    # print(data_submit)
+
+    return data_submit
+
+
+def upload_to_db(city):
+    con = sqlite3.connect("weather_app.db")
+    cur = con.cursor()
+    cur.execute("CREATE TABLE IF NOT EXISTS city_data(City_Name, Avg_temp, Max_temp, Min_temp, Avg_Humidity)")
+    cur.execute("INSERT INTO city_data VALUES(?, ?, ?, ?, ?)", data_format(city))
+    con.commit()
+    con.close()
+
+
+#upload_to_db("Belfast")
+
+# Seeing if database is working
+
+con = sqlite3.connect("weather_app.db")
+cur = con.cursor()
+res = cur.execute("SELECT * FROM city_data")
+print(res.fetchall())
+# uvicorn main:app --reload in the terminal
