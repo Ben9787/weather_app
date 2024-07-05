@@ -43,8 +43,8 @@ def process_data(city, data):
 
     :param city:
     :param data:
-    :return:    weatherResponse
-    :return:    class city=city,
+    :return:    weatherResponse as an object
+    :return:    city=city,
     :return:    max_temp=main_data['temp_max'],
     :return:    min_temp=main_data['temp_min'],
     :return:    avg_temp=main_data['temp'],
@@ -57,7 +57,7 @@ def process_data(city, data):
           "\nMax temp: ", main_data['temp_max'],
           "\nMin temp: ", main_data['temp_min'],
           "\nAvg Humidity: ", main_data['humidity'])
-
+    #upload_to_db(city)
     return weatherResponse(
         city=city,
         max_temp=main_data['temp_max'],
@@ -72,18 +72,14 @@ def get_weather(city: str):
     data = fetch_weather(city, API_KEY, "metric")
     if data is None:
         raise HTTPException(status_code=404, detail="City not found")
-
+    upload_to_db(city, data)
     return process_data(city, data)
 
 
 # print(fetch_weather("Belfast" , API_KEY, "metric"))
 
-
-con = sqlite3.connect("weather_app.db")
-
-
-def data_format(city):
-    data = get_weather(city)
+def data_format(city, data):
+    data = process_data(city, data)
     data_city = data.city
     data_avg_temp = data.avg_temp
     data_max_temp = data.max_temp
@@ -95,16 +91,14 @@ def data_format(city):
     return data_submit
 
 
-def upload_to_db(city):
+def upload_to_db(city, data):
     con = sqlite3.connect("weather_app.db")
     cur = con.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS city_data(city_name UNIQUE, avg_temp, max_temp, min_temp, avg_humidity)")
-    cur.execute("INSERT OR REPLACE INTO city_data VALUES(?, ?, ?, ?, ?)", data_format(city))
+    cur.execute("INSERT OR REPLACE INTO city_data VALUES(?, ?, ?, ?, ?)", data_format(city, data))
     con.commit()
     con.close()
 
-
-upload_to_db("Belfast")
 
 # Seeing if database is working
 
