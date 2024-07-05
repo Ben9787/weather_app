@@ -98,18 +98,19 @@ def data_format(city):
 def upload_to_db(city):
     con = sqlite3.connect("weather_app.db")
     cur = con.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS city_data(City_Name, Avg_temp, Max_temp, Min_temp, Avg_Humidity)")
-    cur.execute("INSERT INTO city_data VALUES(?, ?, ?, ?, ?)", data_format(city))
+    cur.execute("CREATE TABLE IF NOT EXISTS city_data(city_name UNIQUE, avg_temp, max_temp, min_temp, avg_humidity)")
+    cur.execute("INSERT OR REPLACE INTO city_data VALUES(?, ?, ?, ?, ?)", data_format(city))
     con.commit()
     con.close()
 
 
-#upload_to_db("Belfast")
+upload_to_db("Belfast")
 
 # Seeing if database is working
 
-con = sqlite3.connect("weather_app.db")
+con = sqlite3.connect("weather_app.db", timeout=10)
 cur = con.cursor()
 res = cur.execute("SELECT * FROM city_data")
 print(res.fetchall())
+
 # uvicorn main:app --reload in the terminal
